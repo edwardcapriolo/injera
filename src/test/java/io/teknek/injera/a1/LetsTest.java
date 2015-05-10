@@ -12,14 +12,6 @@ import org.junit.Test;
 public class LetsTest {
 
   @Test
-  public void aTest(){
-    Struct s = new Struct().withField( 
-            new Field(1, "afield", new Int32Type())).
-       withField(
-            new Field(2, "bfield", new StringType()));
-  } 
-
-  @Test
   public void sample(){
     SampleObj a = new SampleObj();
     a.setAfield(5);

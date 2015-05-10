@@ -19,6 +19,7 @@ public class SampleObj {
     int size;
   }
   
+  private Field [] fields = new Field[] { null, null, Field.a_field, Field.b_field, Field.c_field, Field.d_field, } ;
   private final ByteBuffer injDataBuffer;
   private int maxPosition = 0;
     
@@ -67,12 +68,14 @@ public class SampleObj {
   }
   
   private Field findFieldForTag(int tag){
+    return fields[tag];
+    /*
     for (Field f: Field.values()){
       if (f.tag == tag){
         return f;
       }
     }
-    throw new RuntimeException("no matching tag "+ tag);
+    throw new RuntimeException("no matching tag "+ tag);*/
   }
   
   private int locateForWrite (Field insertField, SelfWriteCallBack callBack){
