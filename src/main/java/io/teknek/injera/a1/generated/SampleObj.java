@@ -162,7 +162,7 @@ public class SampleObj {
       public void selfWrite(int pos2) {
         injDataBuffer.put(pos2, (byte) (Field.d_field.tag & 0xFF));
         injDataBuffer.putInt(pos2 + 1, x.length);
-        injDataBuffer.position(pos2 + 1);
+        injDataBuffer.position(pos2 + 1 + 4);
         for (int i =0;i<x.length;i++){
           injDataBuffer.putInt(x[i]);
         }
@@ -181,7 +181,7 @@ public class SampleObj {
     }
     int [] res = new int [injDataBuffer.getInt(pos + 1)];
     for (int i=0;i<res.length;i++){
-      res[i] = injDataBuffer.getInt((pos + 1)+ (i *4));
+      res[i] = injDataBuffer.getInt((pos + 1 + 4)+ (i *4));
     }
     return res;
   }
