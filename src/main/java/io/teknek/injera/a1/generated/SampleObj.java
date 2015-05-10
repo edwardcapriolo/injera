@@ -5,10 +5,10 @@ public class SampleObj {
   private static final int ONE_BYTE_SIZE = -1;
   private static final int TWO_BYTE_SIZE = -2;
   private static enum Field {
-    a_field(1, 4),
-    b_field(2, 4),
-    c_field(3, ONE_BYTE_SIZE),
-    d_field(4, TWO_BYTE_SIZE);
+    a_field(2, 4),
+    b_field(3, 4),
+    c_field(4, ONE_BYTE_SIZE),
+    d_field(5, TWO_BYTE_SIZE);
     
     Field(int tag, int size){
       this.tag = tag;
