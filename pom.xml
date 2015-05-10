@@ -26,11 +26,11 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/edwardcapriolo/teknek-core</url>
-		<connection>https://github.com/edwardcapriolo/teknek-core.git</connection>
+		<url>https://github.com/edwardcapriolo/injera</url>
+		<connection>https://github.com/edwardcapriolo/injera.git</connection>
 		<!--<developerConnection>scm:git:https://github.com/edwardcapriolo/teknek-core.git</developerConnection> -->
 		<!--<developerConnection>scm:git:git@github.com:juven/git-demo.git</developerConnection> -->
-		<developerConnection>scm:git:git@github.com:edwardcapriolo/teknek-core.git</developerConnection>
+		<developerConnection>scm:git:git@github.com:edwardcapriolo/injera.git</developerConnection>
 	</scm>
 	<dependencies>
 
