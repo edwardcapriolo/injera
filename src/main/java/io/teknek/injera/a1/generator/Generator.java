@@ -98,7 +98,7 @@ public class Generator {
         sb.append("    if (pos == -1){" + "\n");
         sb.append("      return 0;" + "\n");
         sb.append("    }" + "\n");
-        sb.append("    return injDataBuffer.getInt(pos + 1);" + "\n");
+        sb.append("    return injDataBuffer.get"+ capitalize(javaPrimitiveOf(field.getType()))+"(pos + 1);" + "\n");
         sb.append("  }" + "\n");
       }
     }
