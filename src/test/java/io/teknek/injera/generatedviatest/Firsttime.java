@@ -28,6 +28,37 @@ public class Firsttime {
   public Firsttime(ByteBuffer buffer){
      injDataBuffer = buffer;
   }
+  public void setAfield(final int x){
+    Field me =  Field.afield;
+    int size = Field.afield.size;
+    int pos = locateForWrite(Field.afield, size);
+    if (pos == -1){
+      ////checksizeandallocateifneeded()
+      pos = 0;
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x);
+      maxPosition = pos + 1 + size;
+    } else if (pos == maxPosition) {
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x);
+      maxPosition = pos + 1 + size;
+    } else if (pos + size == maxPosition){////wrong with variable size
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x);
+    } else if (pos + size < maxPosition){ //// wrong with variable size
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x);
+    } else {
+      throw new RuntimeException("Did not conside that");
+    }
+  }
+  public int getAfield(){
+    int pos = locateForRead(Field.afield);
+    if (pos == -1){
+      return 0;
+    }
+    return injDataBuffer.getInt(pos + 1);
+  }
   private int locateForRead(Field searchField){
     if (maxPosition == 0){
       return -1;
@@ -35,7 +66,7 @@ public class Firsttime {
     int i = 0;
     while (i < maxPosition){
       int index = injDataBuffer.get(i) & 0xFF;
-      if (index == 0){ 
+      if (index == 0){
         return -1;
       }
       if (index == searchField.tag){
@@ -55,5 +86,44 @@ public class Firsttime {
       }
     }
     throw new IllegalArgumentException("We done fed up");
+  }
+  private int locateForWrite (Field insertField, int size){
+    if (maxPosition == 0){
+      return -1;
+    } 
+    int i = 0;
+    while (i < maxPosition){
+      int tag = injDataBuffer.get(i) & 0xFF;
+      if (tag == insertField.tag){
+        return i;
+      }
+      if (tag > insertField.tag){
+        int toShift = -1;
+        if (insertField.size == ONE_BYTE_SIZE){
+          toShift = size + 1;
+        } else if (insertField.size == TWO_BYTE_SIZE){
+          toShift = size + 1;
+        } else {
+          toShift= size + 1;
+        }
+        for (int j = 0; j < toShift; j++) {
+          injDataBuffer.put((byte) 0);
+        }
+        for (int j = maxPosition;j >  i; j--){
+          injDataBuffer.put(maxPosition + toShift, 
+          injDataBuffer.get(maxPosition));
+        }
+        maxPosition += toShift;
+        return i;
+      }
+      Field iterateField = findFieldForTag(tag);
+      if (iterateField.size == -1){
+        int objectSize = injDataBuffer.get(i+1) & 0xFF;
+        i += objectSize + 2;
+      } else {
+        i += iterateField.size + 1;
+      }
+    }
+    return i;
   }
 }

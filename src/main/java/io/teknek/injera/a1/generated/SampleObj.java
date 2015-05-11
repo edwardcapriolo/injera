@@ -69,16 +69,9 @@ public class SampleObj {
   
   private Field findFieldForTag(int tag){
     return fields[tag];
-    /*
-    for (Field f: Field.values()){
-      if (f.tag == tag){
-        return f;
-      }
-    }
-    throw new RuntimeException("no matching tag "+ tag);*/
   }
   
-  private int locateForWrite (Field insertField, SelfWriteCallBack callBack){
+  private int locateForWrite (Field insertField, int size){
     if (maxPosition == 0){
       return -1;
     } 
@@ -91,11 +84,11 @@ public class SampleObj {
       if (tag > insertField.tag){ // shift over
         int toShift = -1;
         if (insertField.size == ONE_BYTE_SIZE){
-          toShift = callBack.selfSize() + 1;
+          toShift = size + 1;
         } else if (insertField.size == TWO_BYTE_SIZE){
-          toShift = callBack.selfSize() + 1;
+          toShift = size + 1;
         } else {
-          toShift= callBack.selfSize() + 1;
+          toShift= size + 1;
         }
         //ensure size
         for (int j = 0; j < toShift; j++) {
@@ -236,8 +229,36 @@ public class SampleObj {
     int selfSize();
   }
   
+  
+  
+  public void setAfieldAlt(final int x){
+    int size = Field.a_field.size;
+    int pos = locateForWrite(Field.a_field, size);
+    if (pos == -1){
+      //checksizeandallocateifneeded()
+      pos = 0;
+      injDataBuffer.put(pos, (byte) (Field.a_field.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x);
+      maxPosition = pos + 1 + size;
+    } else if (pos == maxPosition) {
+      injDataBuffer.put(pos, (byte) (Field.a_field.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x);
+      maxPosition = pos + 1 + size;
+    } else if (pos + size == maxPosition){//wrong with variable size
+      injDataBuffer.put(pos, (byte) (Field.a_field.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x);
+    } else if (pos + size < maxPosition){ // wrong with variable size
+      injDataBuffer.put(pos, (byte) (Field.a_field.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x);
+    } else {
+      throw new RuntimeException("Did not conside that");
+    }
+  }
+  
+  
   public void writeYourself(Field field, SelfWriteCallBack back){
-    int pos = locateForWrite(field, back);
+    int size = back.selfSize();
+    int pos = locateForWrite(field, size);
     if (pos == -1){
       //checksizeandallocateifneeded()
       pos = 0;

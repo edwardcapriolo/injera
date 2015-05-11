@@ -5,6 +5,7 @@ import io.teknek.injera.a1.model.Field;
 import io.teknek.injera.a1.model.Int32Type;
 import io.teknek.injera.a1.model.StringType;
 import io.teknek.injera.a1.model.Struct;
+import io.teknek.injera.generatedviatest.Firsttime;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,19 +30,12 @@ public class LetsTest {
     a.setDfield( new int [] { 4, 5});
     Assert.assertArrayEquals(new int [] {4, 5} , a.getDField());
     //Assert.assertArrayEquals(expecteds, actuals)
-    
+    a.setAfieldAlt(8);
+    Assert.assertEquals(8, a.getAfield());
   }
 
   class a {
-    int x;
-    String y;
-    
-    public String getY() {
-      return y;
-    }
-    public void setY(String y) {
-      this.y = y;
-    }
+    int x;    
     public void setX(int x){
       this.x = x;
     }
@@ -51,27 +45,30 @@ public class LetsTest {
   }
   
   @Test
-  public void sampleX(){
-    long start = System.currentTimeMillis();
-    a a = new a();
-    String s = "dude";
-    for (int i = 0 ; i < 100000; i++){
-      a.setX(5);
-      a.setY(s);
+  public void sample2() {
+    {
+      long start = System.currentTimeMillis();
+      Firsttime a = new Firsttime();
+      for (int i = 0; i < 100000; i++) {
+        a.setAfield(5);
+      }
+      System.out.println(System.currentTimeMillis() - start);
     }
-    System.out.println ( System.currentTimeMillis() - start );
-  }
-  
-  
-  @Test
-  public void sample2(){
-    long start = System.currentTimeMillis();
-    SampleObj a = new SampleObj();
-    String s = "dude";
-    for (int i = 0 ; i < 100000; i++){
-      a.setCfield(s);
-      a.setAfield(5);
+    {
+      long start = System.currentTimeMillis();
+      a a = new a();
+      for (int i = 0; i < 100000; i++) {
+        a.setX(5);
+      }
+      System.out.println(System.currentTimeMillis() - start);
     }
-    System.out.println ( System.currentTimeMillis() - start );
+    {
+      long start = System.currentTimeMillis();
+      Firsttime a = new Firsttime();
+      for (int i = 0; i < 100000; i++) {
+        a.setAfield(5);
+      }
+      System.out.println(System.currentTimeMillis() - start);
+    }
   }
 }

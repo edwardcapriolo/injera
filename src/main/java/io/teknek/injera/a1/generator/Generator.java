@@ -5,11 +5,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import io.teknek.injera.a1.generated.SampleObj.SelfWriteCallBack;
 import io.teknek.injera.a1.model.Field;
 import io.teknek.injera.a1.model.Int32Type;
 import io.teknek.injera.a1.model.StringType;
 import io.teknek.injera.a1.model.Struct;
 import io.teknek.injera.a1.model.Type;
+import io.teknek.injera.a1.model.SimpleType;
 
 public class Generator {
 
@@ -56,12 +58,53 @@ public class Generator {
     sb.append("  private final ByteBuffer injDataBuffer;" + "\n");
     sb.append("  private int maxPosition = 0;" + "\n");
     generateConstructors(sb, struct, name);
-    
+    generateSettersAndGetters(sb, struct, name);
     generateReadFunction(sb);
+    generateWriteFunction(sb);
     sb.append("}"); // end class
     FileWriter fw = new FileWriter(new File(currentDirectory, capitalize(name)  + ".java"));
     fw.write(sb.toString());
     fw.close();
+  } 
+
+  private void generateSettersAndGetters(StringBuilder sb, Struct struct, String name) {
+    for (Field field : struct.getFields()){
+      if (field.getType() instanceof SimpleType){
+        sb.append("  public void set"+ capitalize(field.getName()) +"(final "+ javaPrimitiveOf(field.getType())+" x){" + "\n");
+        sb.append("    Field me =  Field." + field.getName() + ";\n");
+        sb.append("    int size = Field." + field.getName() + ".size;" + "\n");
+        sb.append("    int pos = locateForWrite(Field."+field.getName()+", size);" + "\n");
+        sb.append("    if (pos == -1){" + "\n");
+        sb.append("      ////checksizeandallocateifneeded()" + "\n");
+        sb.append("      pos = 0;" + "\n");
+        sb.append("      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n");
+        sb.append("      injDataBuffer.putInt(pos + 1, x);" + "\n");
+        sb.append("      maxPosition = pos + 1 + size;" + "\n");
+        sb.append("    } else if (pos == maxPosition) {" + "\n");
+        sb.append("      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n");
+        sb.append("      injDataBuffer.putInt(pos + 1, x);" + "\n");
+        sb.append("      maxPosition = pos + 1 + size;" + "\n");
+        sb.append("    } else if (pos + size == maxPosition){////wrong with variable size" + "\n");
+        sb.append("      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n");
+        sb.append("      injDataBuffer.putInt(pos + 1, x);" + "\n");
+        sb.append("    } else if (pos + size < maxPosition){ //// wrong with variable size" + "\n");
+        sb.append("      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n");
+        sb.append("      injDataBuffer.putInt(pos + 1, x);" + "\n");
+        sb.append("    } else {" + "\n");
+        sb.append("      throw new RuntimeException(\"Did not conside that\");" + "\n");
+        sb.append("    }" + "\n");
+        sb.append("  }" + "\n");
+        
+        
+        sb.append("  public "+javaPrimitiveOf(field.getType())+" get"+ capitalize(field.getName()) +"(){" + "\n");
+        sb.append("    int pos = locateForRead(Field."+field.getName()+");" + "\n");
+        sb.append("    if (pos == -1){" + "\n");
+        sb.append("      return 0;" + "\n");
+        sb.append("    }" + "\n");
+        sb.append("    return injDataBuffer.getInt(pos + 1);" + "\n");
+        sb.append("  }" + "\n");
+      }
+    }
   }
 
   private void generateConstructors(StringBuilder sb, Struct struct, String name) {
@@ -111,6 +154,14 @@ public class Generator {
       return "ONE_BYTE_SIZE";
     } else throw new RuntimeException("do not know how sizeOf "+t);
   }
+  
+  private String javaPrimitiveOf(Type t){
+    if (t instanceof Int32Type){
+      return "int";
+    } else if (t instanceof StringType){
+      return "String";
+    } else throw new RuntimeException("do not know how sizeOf "+t);
+  }
 
   private void generateReadFunction(StringBuilder sb) {
     sb.append("  private int locateForRead(Field searchField){\n");
@@ -140,6 +191,48 @@ public class Generator {
     sb.append("      }\n");
     sb.append("    }\n");
     sb.append("    throw new IllegalArgumentException(\"We done fed up\");\n");
+    sb.append("  }\n");
+  }
+  
+  private void generateWriteFunction(StringBuilder sb) {
+    sb.append("  private int locateForWrite (Field insertField, int size){\n");
+    sb.append("    if (maxPosition == 0){\n");
+    sb.append("      return -1;\n");
+    sb.append("    } \n");
+    sb.append("    int i = 0;\n");
+    sb.append("    while (i < maxPosition){\n");
+    sb.append("      int tag = injDataBuffer.get(i) & 0xFF;\n");
+    sb.append("      if (tag == insertField.tag){\n");
+    sb.append("        return i;\n");
+    sb.append("      }\n");
+    sb.append("      if (tag > insertField.tag){\n");
+    sb.append("        int toShift = -1;\n");
+    sb.append("        if (insertField.size == ONE_BYTE_SIZE){\n");
+    sb.append("          toShift = size + 1;\n");
+    sb.append("        } else if (insertField.size == TWO_BYTE_SIZE){\n");
+    sb.append("          toShift = size + 1;\n");
+    sb.append("        } else {\n");
+    sb.append("          toShift= size + 1;\n");
+    sb.append("        }\n");
+    sb.append("        for (int j = 0; j < toShift; j++) {\n");
+    sb.append("          injDataBuffer.put((byte) 0);\n");
+    sb.append("        }\n");
+    sb.append("        for (int j = maxPosition;j >  i; j--){\n");
+    sb.append("          injDataBuffer.put(maxPosition + toShift, \n");
+    sb.append("          injDataBuffer.get(maxPosition));\n");
+    sb.append("        }\n");
+    sb.append("        maxPosition += toShift;\n");
+    sb.append("        return i;\n");
+    sb.append("      }\n");
+    sb.append("      Field iterateField = findFieldForTag(tag);\n");
+    sb.append("      if (iterateField.size == -1){\n");
+    sb.append("        int objectSize = injDataBuffer.get(i+1) & 0xFF;\n");
+    sb.append("        i += objectSize + 2;\n");
+    sb.append("      } else {\n");
+    sb.append("        i += iterateField.size + 1;\n");
+    sb.append("      }\n");
+    sb.append("    }\n");
+    sb.append("    return i;\n");
     sb.append("  }\n");
   }
 }
