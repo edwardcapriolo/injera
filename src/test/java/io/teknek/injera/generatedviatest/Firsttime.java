@@ -6,8 +6,9 @@ public class Firsttime {
   private static final int ONE_BYTE_SIZE = -1;
   private static final int TWO_BYTE_SIZE = -2;
   private static enum Field {
-    afield(1,4),
-    bfield(2,ONE_BYTE_SIZE),
+    afield(2,4),
+    bfield(3,ONE_BYTE_SIZE),
+    clong(4,8),
     ;
     Field(int tag, int size){
       this.tag = tag;
@@ -16,7 +17,7 @@ public class Firsttime {
     int tag;
     int size;
   }
-  private static final Field [] fields = new Field[] { null, null, Field.afield,Field.bfield,};
+  private static final Field [] fields = new Field[] { null, null, Field.afield,Field.bfield,Field.clong,};
   private Field findFieldForTag(int tag){
     return fields[tag];
   }
@@ -58,6 +59,49 @@ public class Firsttime {
       return 0;
     }
     return injDataBuffer.getInt(pos + 1);
+  }
+  public String getBfield(){
+    int pos = locateForRead(Field.bfield);
+    if (pos == -1){
+      return "";
+    }
+    int size = injDataBuffer.get(pos+1) & 0xFF ;
+    byte [] b = new byte [size];
+    injDataBuffer.position(pos +2);
+    injDataBuffer.get(b, 0 , size);
+    injDataBuffer.position(0);
+    return new String(b);
+  }
+  public void setClong(final long x){
+    Field me =  Field.clong;
+    int size = Field.clong.size;
+    int pos = locateForWrite(Field.clong, size);
+    if (pos == -1){
+      ////checksizeandallocateifneeded()
+      pos = 0;
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putLong(pos + 1, x);
+      maxPosition = pos + 1 + size;
+    } else if (pos == maxPosition) {
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putLong(pos + 1, x);
+      maxPosition = pos + 1 + size;
+    } else if (pos + size == maxPosition){////wrong with variable size
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putLong(pos + 1, x);
+    } else if (pos + size < maxPosition){ //// wrong with variable size
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putLong(pos + 1, x);
+    } else {
+      throw new RuntimeException("Did not conside that");
+    }
+  }
+  public long getClong(){
+    int pos = locateForRead(Field.clong);
+    if (pos == -1){
+      return 0;
+    }
+    return injDataBuffer.getLong(pos + 1);
   }
   private int locateForRead(Field searchField){
     if (maxPosition == 0){

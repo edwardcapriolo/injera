@@ -3,8 +3,11 @@ package io.teknek.injera.a1.generator;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import io.teknek.injera.a1.model.ComplexType;
 import io.teknek.injera.a1.model.Field;
 import io.teknek.injera.a1.model.Int32Type;
+import io.teknek.injera.a1.model.Int64Type;
 import io.teknek.injera.a1.model.StringType;
 import io.teknek.injera.a1.model.Struct;
 import io.teknek.injera.a1.model.Type;
@@ -67,6 +70,9 @@ public class Generator {
   private void generateSettersAndGetters(StringBuilder sb, Struct struct, String name) {
     for (Field field : struct.getFields()){
       if (field.getType() instanceof SimpleType){
+        
+        String bufferWriteCall = "      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n";
+        bufferWriteCall += String.format("      injDataBuffer.put%s(pos + 1, x);" + "\n", capitalize(javaPrimitiveOf(field.getType())));
         sb.append("  public void set"+ capitalize(field.getName()) +"(final "+ javaPrimitiveOf(field.getType())+" x){" + "\n");
         sb.append("    Field me =  Field." + field.getName() + ";\n");
         sb.append("    int size = Field." + field.getName() + ".size;" + "\n");
@@ -74,19 +80,15 @@ public class Generator {
         sb.append("    if (pos == -1){" + "\n");
         sb.append("      ////checksizeandallocateifneeded()" + "\n");
         sb.append("      pos = 0;" + "\n");
-        sb.append("      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n");
-        sb.append("      injDataBuffer.putInt(pos + 1, x);" + "\n");
+        sb.append(bufferWriteCall);
         sb.append("      maxPosition = pos + 1 + size;" + "\n");
         sb.append("    } else if (pos == maxPosition) {" + "\n");
-        sb.append("      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n");
-        sb.append("      injDataBuffer.putInt(pos + 1, x);" + "\n");
+        sb.append(bufferWriteCall);
         sb.append("      maxPosition = pos + 1 + size;" + "\n");
         sb.append("    } else if (pos + size == maxPosition){////wrong with variable size" + "\n");
-        sb.append("      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n");
-        sb.append("      injDataBuffer.putInt(pos + 1, x);" + "\n");
+        sb.append(bufferWriteCall);
         sb.append("    } else if (pos + size < maxPosition){ //// wrong with variable size" + "\n");
-        sb.append("      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n");
-        sb.append("      injDataBuffer.putInt(pos + 1, x);" + "\n");
+        sb.append(bufferWriteCall);
         sb.append("    } else {" + "\n");
         sb.append("      throw new RuntimeException(\"Did not conside that\");" + "\n");
         sb.append("    }" + "\n");
@@ -98,10 +100,31 @@ public class Generator {
         sb.append("    if (pos == -1){" + "\n");
         sb.append("      return 0;" + "\n");
         sb.append("    }" + "\n");
-        sb.append("    return injDataBuffer.get"+ capitalize(javaPrimitiveOf(field.getType()))+"(pos + 1);" + "\n");
+        sb.append(String.format("    return injDataBuffer.get%s(pos + 1);" + "\n", capitalize(javaPrimitiveOf(field.getType()))));
         sb.append("  }" + "\n");
+      } else if (field.getType() instanceof ComplexType){
+        if (field.getType() instanceof StringType){
+          gennerateStringTypeSettersAndGetters(sb, field, name);
+        } else {
+          throw new RuntimeException("what is a "+field);
+        }
       }
     }
+  }
+
+  private void gennerateStringTypeSettersAndGetters(StringBuilder sb, Field field, String name) {
+    sb.append("  public String get"+ capitalize(field.getName())+"(){\n");
+    sb.append("    int pos = locateForRead(Field."+ field.getName()+");\n");
+    sb.append("    if (pos == -1){\n");
+    sb.append("      return \"\";\n");
+    sb.append("    }\n"); 
+    sb.append("    int size = injDataBuffer.get(pos+1) & 0xFF ;\n");
+    sb.append("    byte [] b = new byte [size];\n");
+    sb.append("    injDataBuffer.position(pos +2);\n");
+    sb.append("    injDataBuffer.get(b, 0 , size);\n");
+    sb.append("    injDataBuffer.position(0);\n");
+    sb.append("    return new String(b);\n");
+    sb.append("  }\n");
   }
 
   private void generateConstructors(StringBuilder sb, Struct struct, String name) {
@@ -149,6 +172,8 @@ public class Generator {
       return "4";
     } else if (t instanceof StringType){
       return "ONE_BYTE_SIZE";
+    } else if (t instanceof Int64Type) {
+      return "8";
     } else throw new RuntimeException("do not know how sizeOf "+t);
   }
   
@@ -157,6 +182,8 @@ public class Generator {
       return "int";
     } else if (t instanceof StringType){
       return "String";
+    } else if (t instanceof Int64Type) {
+      return "long";
     } else throw new RuntimeException("do not know how sizeOf "+t);
   }
 
