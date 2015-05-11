@@ -3,9 +3,6 @@ package io.teknek.injera.a1.generator;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import io.teknek.injera.a1.generated.SampleObj.SelfWriteCallBack;
 import io.teknek.injera.a1.model.Field;
 import io.teknek.injera.a1.model.Int32Type;
 import io.teknek.injera.a1.model.StringType;
