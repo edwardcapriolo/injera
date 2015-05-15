@@ -11,6 +11,7 @@ import io.teknek.injera.a1.model.Int64Type;
 import io.teknek.injera.a1.model.StringType;
 import io.teknek.injera.a1.model.Struct;
 import io.teknek.injera.a1.model.Type;
+import io.teknek.injera.a1.model.ListType;
 import io.teknek.injera.a1.model.SimpleType;
 
 public class Generator {
@@ -105,10 +106,36 @@ public class Generator {
       } else if (field.getType() instanceof ComplexType){
         if (field.getType() instanceof StringType){
           gennerateStringTypeSettersAndGetters(sb, field, name);
+        } else if (field.getType() instanceof ListType ){
+          generateListTypeSettersAndGetters(sb, field, name);
         } else {
           throw new RuntimeException("what is a "+field);
         }
       }
+    }
+  }
+
+  private void generateListTypeSettersAndGetters(StringBuilder sb, Field field, String name) {
+    ListType t = (ListType) field.getType();
+    if (t.getManagedType() instanceof ComplexType){
+      throw new RuntimeException("Punting");
+    } else if (t.getManagedType() instanceof SimpleType) {
+      sb.append(String.format("  public %s [] get%s(){\n", javaPrimitiveOf(t.getManagedType()), capitalize(field.getName())));
+      sb.append(String.format("    int pos = locateForRead(Field.%s);\n", field.getName()));
+      sb.append("    if (pos == -1){\n");
+      sb.append("      return null;\n");
+      sb.append("    }\n");
+      sb.append(String.format("    %s [] res = new %s [injDataBuffer.get%s(pos + 1)];\n"
+              ,javaPrimitiveOf(t.getManagedType()),
+              javaPrimitiveOf(t.getManagedType()), 
+              capitalize(javaPrimitiveOf(t.getManagedType()))));
+      sb.append("    for (int i=0;i<res.length;i++){\n");
+      sb.append(String.format("      res[i] = injDataBuffer.get%s((pos + 1 + %s)+ (i * %s));\n", 
+              capitalize(javaPrimitiveOf(t.getManagedType())), sizeOf(t.getManagedType()),
+              sizeOf(t.getManagedType())));
+      sb.append("    }\n");
+      sb.append("    return res;\n");
+      sb.append("  }\n");
     }
   }
 
@@ -174,7 +201,10 @@ public class Generator {
       return "ONE_BYTE_SIZE";
     } else if (t instanceof Int64Type) {
       return "8";
-    } else throw new RuntimeException("do not know how sizeOf "+t);
+    } else if (t instanceof ComplexType) {
+      return "TWO_BYTE_SIZE";
+    }
+    else throw new RuntimeException("do not know how sizeOf "+t);
   }
   
   private String javaPrimitiveOf(Type t){

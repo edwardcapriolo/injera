@@ -9,6 +9,7 @@ public class Firsttime {
     afield(2,4),
     bfield(3,ONE_BYTE_SIZE),
     clong(4,8),
+    intar(5,TWO_BYTE_SIZE),
     ;
     Field(int tag, int size){
       this.tag = tag;
@@ -17,7 +18,7 @@ public class Firsttime {
     int tag;
     int size;
   }
-  private static final Field [] fields = new Field[] { null, null, Field.afield,Field.bfield,Field.clong,};
+  private static final Field [] fields = new Field[] { null, null, Field.afield,Field.bfield,Field.clong,Field.intar,};
   private Field findFieldForTag(int tag){
     return fields[tag];
   }
@@ -102,6 +103,17 @@ public class Firsttime {
       return 0;
     }
     return injDataBuffer.getLong(pos + 1);
+  }
+  public int [] getIntar(){
+    int pos = locateForRead(Field.intar);
+    if (pos == -1){
+      return null;
+    }
+    int [] res = new int [injDataBuffer.getInt(pos + 1)];
+    for (int i=0;i<res.length;i++){
+      res[i] = injDataBuffer.getInt((pos + 1 + 4)+ (i * 4));
+    }
+    return res;
   }
   private int locateForRead(Field searchField){
     if (maxPosition == 0){
