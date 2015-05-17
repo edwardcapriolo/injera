@@ -32,6 +32,8 @@ public class GeneratorTest {
     Assert.assertEquals(5, firsttime.getAfield());
     firsttime.setClong(4);
     Assert.assertEquals(4, firsttime.getClong());
+    firsttime.setIntar( new int [] {1,2});
+    org.junit.Assert.assertArrayEquals( new int [ ]{ 1, 2}, firsttime.getIntar());
   }
   
   @Test

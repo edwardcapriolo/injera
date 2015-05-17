@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import io.teknek.injera.a1.generated.SampleObj.SelfWriteCallBack;
 import io.teknek.injera.a1.model.ComplexType;
 import io.teknek.injera.a1.model.Field;
 import io.teknek.injera.a1.model.Int32Type;
@@ -136,6 +137,37 @@ public class Generator {
       sb.append("    }\n");
       sb.append("    return res;\n");
       sb.append("  }\n");
+      
+      
+      String bufferWriteCall =         "      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));" + "\n";
+      bufferWriteCall += String.format("      injDataBuffer.putInt(pos + 1, x.length);" + "\n");
+      bufferWriteCall += String.format("      injDataBuffer.position(pos + 1 + %s);\n", sizeOf(t.getManagedType()));
+      bufferWriteCall += String.format("      for (int i =0;i<x.length;i++){\n");
+      bufferWriteCall += String.format("        injDataBuffer.put%s(x[i]);\n", capitalize(javaPrimitiveOf(t.getManagedType())));
+      bufferWriteCall += String.format("      }" );
+      bufferWriteCall +=               "      injDataBuffer.position(0);\n";
+      
+      sb.append("  public void set"+ capitalize(field.getName()) +"(final "+ javaPrimitiveOf(t.getManagedType())+" [] x){" + "\n");
+      sb.append("    Field me =  Field." + field.getName() + ";\n");
+      sb.append("    int size = Field." + field.getName() + ".size;" + "\n");
+      sb.append("    int pos = locateForWrite(Field."+field.getName()+", size);" + "\n");
+      sb.append("    if (pos == -1){" + "\n");
+      sb.append("      ////checksizeandallocateifneeded()" + "\n");
+      sb.append("      pos = 0;" + "\n");
+      sb.append(bufferWriteCall);
+      sb.append("      maxPosition = pos + 1 + 4 + ("+sizeOf(t.getManagedType())+ "* x.length)" + ";\n");
+      sb.append("    } else if (pos == maxPosition) {" + "\n");
+      sb.append(bufferWriteCall);
+      sb.append("      maxPosition = pos + 1 + 4 + ("+sizeOf(t.getManagedType())+ "* x.length)" + ";\n");
+      sb.append("    } else if (pos + size == maxPosition){////wrong with variable size" + "\n");
+      sb.append(bufferWriteCall);
+      sb.append("    } else if (pos + size < maxPosition){ //// wrong with variable size" + "\n");
+      sb.append(bufferWriteCall);
+      sb.append("    } else {" + "\n");
+      sb.append("      throw new RuntimeException(\"Did not conside that\");" + "\n");
+      sb.append("    }" + "\n");
+      sb.append("  }\n");
+     
     }
   }
 

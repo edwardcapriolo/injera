@@ -115,6 +115,46 @@ public class Firsttime {
     }
     return res;
   }
+  public void setIntar(final int [] x){
+    Field me =  Field.intar;
+    int size = Field.intar.size;
+    int pos = locateForWrite(Field.intar, size);
+    if (pos == -1){
+      ////checksizeandallocateifneeded()
+      pos = 0;
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x.length);
+      injDataBuffer.position(pos + 1 + 4);
+      for (int i =0;i<x.length;i++){
+        injDataBuffer.putInt(x[i]);
+      }      injDataBuffer.position(0);
+      maxPosition = pos + 1 + 4 + (4* x.length);
+    } else if (pos == maxPosition) {
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x.length);
+      injDataBuffer.position(pos + 1 + 4);
+      for (int i =0;i<x.length;i++){
+        injDataBuffer.putInt(x[i]);
+      }      injDataBuffer.position(0);
+      maxPosition = pos + 1 + 4 + (4* x.length);
+    } else if (pos + size == maxPosition){////wrong with variable size
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x.length);
+      injDataBuffer.position(pos + 1 + 4);
+      for (int i =0;i<x.length;i++){
+        injDataBuffer.putInt(x[i]);
+      }      injDataBuffer.position(0);
+    } else if (pos + size < maxPosition){ //// wrong with variable size
+      injDataBuffer.put(pos, (byte) (me.tag & 0xFF));
+      injDataBuffer.putInt(pos + 1, x.length);
+      injDataBuffer.position(pos + 1 + 4);
+      for (int i =0;i<x.length;i++){
+        injDataBuffer.putInt(x[i]);
+      }      injDataBuffer.position(0);
+    } else {
+      throw new RuntimeException("Did not conside that");
+    }
+  }
   private int locateForRead(Field searchField){
     if (maxPosition == 0){
       return -1;
